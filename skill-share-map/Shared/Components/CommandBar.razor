@@ -1,0 +1,217 @@
+@using SkillShareMap.Models
+@inject CommandBarState CmdState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
+
+@* ── Floating launcher: drifting glow-jellyfish, opens the command palette ── *@
+<button class="ssm-cmd-orb @(_isOpen ? "active" : "")" @onclick="Toggle"
+        title="AI command bar — press Ctrl/⌘ + K">
+    <span class="ssm-jelly-glow"></span>
+    <span class="ssm-jelly-bell">
+        <span class="ssm-jelly-eyes"><i></i><i></i></span>
+    </span>
+    <span class="ssm-jelly-tentacles"><i></i><i></i><i></i><i></i><i></i></span>
+    <span class="ssm-cmd-kbd">⌘K</span>
+</button>
+
+@if (_isOpen)
+{
+    <div class="ssm-cmd-backdrop" @onclick="Close"></div>
+
+    <div class="ssm-cmd-palette" @onclick:stopPropagation="true">
+        <div class="ssm-cmd-scan"></div>
+
+        <div class="ssm-cmd-inputrow">
+            <span class="ssm-cmd-glyph">◇</span>
+            <input id="ssmCmdInput" class="ssm-cmd-input"
+                   value="@_text"
+                   @oninput="@(e => _text = e.Value?.ToString() ?? string.Empty)"
+                   @onkeydown="OnKeyDown"
+                   placeholder="Tell the map what you're looking for…" autocomplete="off" />
+            @if (_isThinking)
+            {
+                <span class="ssm-cmd-spinner"></span>
+            }
+            else
+            {
+                <span class="ssm-cmd-enter">↵</span>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_preview))
+        {
+            <div class="ssm-cmd-preview">@_preview</div>
+        }
+
+        <div class="ssm-cmd-section">Try saying</div>
+        <div class="ssm-cmd-suggest">
+            @foreach (var s in _suggestions)
+            {
+                <button class="ssm-cmd-chip" @onclick="@(() => RunAsync(s))" disabled="@_isThinking">@s</button>
+            }
+        </div>
+
+        <div class="ssm-cmd-foot">
+            <span><kbd>↵</kbd> run</span>
+            <span><kbd>esc</kbd> close</span>
+            <span class="ssm-cmd-brand">SAGE intelligence</span>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isOpen;
+    private bool _isThinking;
+    private string _text = "";
+    private string _preview = "";
+    private DotNetObjectReference<CommandBar>? _selfRef;
+
+    private readonly string[] _suggestions =
+    {
+        "Recommend tasks for me",
+        "Show urgent tasks near me",
+        "Tech help, highest pay",
+        "Creative design tasks",
+        "Remote writing gigs"
+    };
+
+    protected override void OnInitialized()
+    {
+        CmdState.OnOpenChange += OnOpenChanged;
+        _isOpen = CmdState.IsOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _selfRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("ssmCommandBar.register", _selfRef);
+        }
+    }
+
+    private async void OnOpenChanged()
+    {
+        _isOpen = CmdState.IsOpen;
+        await InvokeAsync(StateHasChanged);
+        if (_isOpen)
+        {
+            var seed = CmdState.ConsumeSeed();
+            if (!string.IsNullOrWhiteSpace(seed)) _text = seed;
+            _preview = "";
+            try { await JS.InvokeVoidAsync("ssmCommandBar.focusInput", "ssmCmdInput"); } catch { }
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    [JSInvokable]
+    public Task ToggleFromJs()
+    {
+        CmdState.Toggle();
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task EscapeFromJs()
+    {
+        if (CmdState.IsOpen) CmdState.Close();
+        return Task.CompletedTask;
+    }
+
+    private void Toggle() => CmdState.Toggle();
+    private void Close() => CmdState.Close();
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_isThinking)
+            await RunAsync(_text);
+        else if (e.Key == "Escape")
+            Close();
+    }
+
+    private async Task RunAsync(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        _text = text;
+        _isThinking = true;
+        StateHasChanged();
+
+        var cmd = ParseCommand(text);
+
+        // "Recommend for me" keeps the whole map visible — the passive intelligence
+        // layer on the map page glows the best-matching nodes rather than hiding the rest.
+        // A tiny pause sells the "thinking" moment.
+        if (cmd.RecommendForMe) await Task.Delay(450);
+
+        // Make sure we're on the map page before dispatching map effects.
+        var rel = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].Trim('/');
+        if (!string.IsNullOrEmpty(rel))
+            Navigation.NavigateTo("/");
+
+        _preview = cmd.Echo;
+        _isThinking = false;
+
+        await CmdState.DispatchAsync(cmd);
+        Snackbar.Add(cmd.Echo, Severity.Normal);
+        CmdState.Close();
+    }
+
+    // ── Lightweight natural-language → intent parser ──
+    private MapCommand ParseCommand(string raw)
+    {
+        var t = raw.ToLowerInvariant();
+        var cmd = new MapCommand { Raw = raw };
+
+        if (Has(t, "study", "tutor", "homework", "exam", "assignment")) cmd.Categories.Add(TaskCategory.StudyHelp);
+        if (Has(t, "tech", "coding", "code", "computer", "it ", "software", "bug")) cmd.Categories.Add(TaskCategory.TechHelp);
+        if (Has(t, "design", "creative", "logo", "graphic", "ui", "art")) cmd.Categories.Add(TaskCategory.CreativeDesign);
+        if (Has(t, "photo", "video", "film", "shoot", "camera")) cmd.Categories.Add(TaskCategory.PhotoVideo);
+        if (Has(t, "writing", "write", "edit", "essay", "proofread", "copy")) cmd.Categories.Add(TaskCategory.WritingEditing);
+        if (Has(t, "language", "translate", "translation", "english", "chinese", "spanish")) cmd.Categories.Add(TaskCategory.LanguageHelp);
+
+        if (Has(t, "urgent", "asap", "now", "today", "rush")) cmd.UrgentOnly = true;
+        if (Has(t, "remote", "online", "from home", "anywhere")) cmd.Remote = true;
+        else if (Has(t, "near", "nearby", "onsite", "on-site", "map", "around me")) cmd.Remote = false;
+        if (Has(t, "highest pay", "best paid", "well paid", "most money", "highest budget", "expensive", "top pay", "pay")) cmd.SortByBudgetDesc = true;
+        if (Has(t, "recommend", "for me", "suggest", "best match", "match me", "what should", "good for me", "pick")) cmd.RecommendForMe = true;
+
+        cmd.Echo = BuildEcho(cmd);
+        return cmd;
+    }
+
+    private static bool Has(string text, params string[] terms) => terms.Any(text.Contains);
+
+    private string BuildEcho(MapCommand c)
+    {
+        var parts = new List<string>();
+        if (c.RecommendForMe) parts.Add("AI picks for you");
+        if (c.Categories.Count > 0) parts.Add(string.Join(" + ", c.Categories.Select(CategoryName)));
+        if (c.UrgentOnly) parts.Add("urgent only");
+        if (c.SortByBudgetDesc) parts.Add("highest pay first");
+        if (c.Remote == true) parts.Add("remote");
+        else if (c.Remote == false) parts.Add("on the map");
+
+        if (parts.Count == 0) return "Showing everything nearby";
+        return "Scanning: " + string.Join(", ", parts);
+    }
+
+    private static string CategoryName(TaskCategory c) => c switch
+    {
+        TaskCategory.StudyHelp => "Study Help",
+        TaskCategory.TechHelp => "Tech Help",
+        TaskCategory.CreativeDesign => "Creative Design",
+        TaskCategory.PhotoVideo => "Photo & Video",
+        TaskCategory.WritingEditing => "Writing & Editing",
+        TaskCategory.LanguageHelp => "Language Help",
+        _ => c.ToString()
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        CmdState.OnOpenChange -= OnOpenChanged;
+        try { await JS.InvokeVoidAsync("ssmCommandBar.unregister"); } catch { }
+        _selfRef?.Dispose();
+    }
+}

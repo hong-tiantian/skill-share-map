@@ -33,9 +33,13 @@ builder.Services.AddScoped<IReputationService, ReputationService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IGeoService, GeoService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
+builder.Services.AddScoped<ISkillVerificationService, SkillVerificationService>();
 
 // Register UserState as Scoped for circuit-level state
 builder.Services.AddScoped<UserState>();
+
+// Global AI command bar state + command dispatch (circuit-scoped)
+builder.Services.AddScoped<CommandBarState>();
 
 // Add HTTP client for external APIs
 builder.Services.AddHttpClient();

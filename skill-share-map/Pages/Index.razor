@@ -1,6 +1,7 @@
 @page "/"
 @using SkillShareMap.Models
 @using SkillShareMap.Services
+@using SkillShareMap.Shared
 @using SkillShareMap.Shared.Components
 @inject ITaskService TaskService
 @inject IJobService JobService
@@ -9,6 +10,8 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
+@inject IAIAssistantService AIService
+@inject CommandBarState CmdState
 
 <PageTitle>Skill Share Map</PageTitle>
 
@@ -249,7 +252,7 @@
 @if (!_isMapExpanded)
 {
     @* ─── HERO ─── *@
-    <div style="width: 100%; position: relative; background-color: #FFFFFF; overflow: hidden;">
+    <div style="width: 100%; position: relative; background: transparent; overflow: hidden;">
         <div style="position: absolute; bottom: -20%; left: 50%; transform: translateX(-50%); width: min(600px, 80vw); height: 300px; background: radial-gradient(ellipse at center, rgba(74, 117, 176, 0.18) 0%, transparent 70%); filter: blur(60px); z-index: 0; pointer-events: none;"></div>
         <MudContainer MaxWidth="MaxWidth.Large" Class="pt-14 pb-16" Style="position: relative; z-index: 1;">
             <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="text-center">
@@ -269,11 +272,9 @@
                 </div>
                 @if (_viewMode == "onsite")
                 {
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
-                               StartIcon="@Icons.Material.Filled.Explore"
-                               Class="mt-6 rounded-pill px-10 py-3"
-                               Style="text-transform: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 20px rgba(74, 117, 176, 0.3);"
-                               OnClick="OpenMapOverlay">Explore the Map</MudButton>
+                    <MudText Typo="Typo.caption" Align="Align.Center" Style="color: #93a4c0; letter-spacing: 0.3px;" Class="mt-4">
+                        Tap the live map below to explore in full screen
+                    </MudText>
                 }
             </MudStack>
         </MudContainer>
@@ -283,7 +284,7 @@
     <MudContainer MaxWidth="MaxWidth.Large" Class="my-8" Style="width: 90%; max-width: 1400px; margin: 0 auto;">
         @if (_viewMode == "onsite")
         {
-            <div class="map-preview-wrapper" @onclick="OpenMapOverlay">
+            <div class="map-preview-wrapper" @onclick="@(() => OpenMapOverlay())">
                 <div class="map-preview-inner">
                     <MapComponent @ref="_mapComponent"
                                   OnMarkerClickWithCoords="@(args => HandleMarkerClick(args.Id, args.X, args.Y))"
@@ -333,6 +334,7 @@
                                         <div>
                                             <div class="d-flex align-center gap-2 mb-1">
                                                 <MudText Typo="Typo.h6" Style="font-weight: 700;">@task.Title</MudText>
+                                                @if (_aiPickIds.Contains(task.Id)) { <span class="ssm-match-badge">✦ AI MATCH</span> }
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text" Class="font-weight-bold">REMOTE</MudChip>
                                                 @if (task.IsUrgent) { <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text" Class="font-weight-bold">URGENT</MudChip> }
                                             </div>
@@ -366,7 +368,7 @@
     </MudContainer>
 
     @* ─── HOW IT WORKS ─── *@
-    <div style="background-color: #f8f9fb; padding: 60px 0;">
+    <div style="background: transparent; padding: 60px 0;">
         <MudContainer MaxWidth="MaxWidth.Large">
             <MudText Typo="Typo.h4" Align="Align.Center" Style="font-weight: 700; color: #1a1b1e;" Class="mb-2">How It Works</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center" Style="color: #888; max-width: 500px; margin: 0 auto;" Class="mb-10">
@@ -374,7 +376,7 @@
             </MudText>
             <MudGrid Spacing="6" Justify="Justify.Center">
                 <MudItem xs="12" sm="4">
-                    <MudPaper Class="pa-6 rounded-xl text-center hover-card" Elevation="0" Style="background: white; border: 1px solid #eee;">
+                    <MudPaper Class="pa-6 rounded-xl text-center hover-card d-flex flex-column align-center" Elevation="0" Style="background: white; border: 1px solid #eee; height: 100%;">
                         <div class="step-icon-circle mb-4" style="background-color: #e8f0fe;">
                             <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Large" Style="color: #4a75b0;" />
                         </div>
@@ -383,7 +385,7 @@
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="4">
-                    <MudPaper Class="pa-6 rounded-xl text-center hover-card" Elevation="0" Style="background: white; border: 1px solid #eee;">
+                    <MudPaper Class="pa-6 rounded-xl text-center hover-card d-flex flex-column align-center" Elevation="0" Style="background: white; border: 1px solid #eee; height: 100%;">
                         <div class="step-icon-circle mb-4" style="background-color: #fef3e0;">
                             <MudIcon Icon="@Icons.Material.Filled.Handshake" Size="Size.Large" Style="color: #f59e0b;" />
                         </div>
@@ -392,7 +394,7 @@
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="4">
-                    <MudPaper Class="pa-6 rounded-xl text-center hover-card" Elevation="0" Style="background: white; border: 1px solid #eee;">
+                    <MudPaper Class="pa-6 rounded-xl text-center hover-card d-flex flex-column align-center" Elevation="0" Style="background: white; border: 1px solid #eee; height: 100%;">
                         <div class="step-icon-circle mb-4" style="background-color: #e6f9ed;">
                             <MudIcon Icon="@Icons.Material.Filled.Paid" Size="Size.Large" Style="color: #16a34a;" />
                         </div>
@@ -414,7 +416,7 @@
                     <MudText Typo="Typo.body2" Style="color: #888;" Class="mt-1">Recently posted tasks looking for helpers.</MudText>
                 </div>
                 <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward"
-                           Style="text-transform: none; font-weight: 600;" OnClick="OpenMapOverlay">View all on map</MudButton>
+                           Style="text-transform: none; font-weight: 600;" OnClick="@(() => OpenMapOverlay())">View all on map</MudButton>
             </div>
             <MudGrid Spacing="4">
                 @foreach (var task in _featuredTasks)
@@ -484,9 +486,9 @@
             @foreach (var cat in _categoryCards)
             {
                         <MudItem xs="6" sm="4" md="2">
-                            <MudPaper Class="pa-4 rounded-xl text-center hover-card" Elevation="0"
-                                      Style="border: 1px solid #eee; cursor: pointer;" @onclick="@(() => BrowseCategory(cat.Category))">
-                                <MudIcon Icon="@cat.Icon" Size="Size.Large" Style="@($"color: {cat.Color};")" Class="mb-2" />
+                            <MudPaper Class="pa-4 rounded-xl text-center ssm-cat-card" Elevation="0"
+                                      Style="@($"--cat-color: {cat.Color}; cursor: pointer;")" @onclick="@(() => BrowseCategory(cat.Category))">
+                                <span class="ssm-cat-tile mb-2"><MudIcon Icon="@cat.Icon" Size="Size.Large" /></span>
                                 <MudText Typo="Typo.body2" Style="font-weight: 600;">@cat.Name</MudText>
                             </MudPaper>
                         </MudItem>
@@ -506,6 +508,11 @@
     private IEnumerable<TaskCategory?> _selectedCategories = new HashSet<TaskCategory?>();
     private IEnumerable<SkillTaskStatus?> _selectedStatuses = new HashSet<SkillTaskStatus?>();
     private int _distanceKm = 15;
+
+    // AI command-bar driven filters / passive intelligence layer
+    private bool _urgentOnly;
+    private bool _sortByBudget;
+    private HashSet<int> _aiPickIds = new();
 
     private SkillTask? _selectedTask;
     private Job? _selectedJob;
@@ -533,17 +540,18 @@
     private record CategoryCard(TaskCategory Category, string Name, string Icon, string Color);
     private List<CategoryCard> _categoryCards = new()
     {
-        new(TaskCategory.StudyHelp, "Study Help", Icons.Material.Filled.MenuBook, "#4a75b0"),
-        new(TaskCategory.TechHelp, "Tech Help", Icons.Material.Filled.Computer, "#7c3aed"),
-        new(TaskCategory.CreativeDesign, "Creative", Icons.Material.Filled.Palette, "#ec4899"),
-        new(TaskCategory.PhotoVideo, "Photo & Video", Icons.Material.Filled.CameraAlt, "#f59e0b"),
-        new(TaskCategory.WritingEditing, "Writing", Icons.Material.Filled.Edit, "#16a34a"),
-        new(TaskCategory.LanguageHelp, "Language", Icons.Material.Filled.Translate, "#0891b2"),
+        new(TaskCategory.StudyHelp, "Study Help", SsmIcons.StudyHelp, "#4a75b0"),
+        new(TaskCategory.TechHelp, "Tech Help", SsmIcons.TechHelp, "#7c3aed"),
+        new(TaskCategory.CreativeDesign, "Creative", SsmIcons.CreativeDesign, "#ec4899"),
+        new(TaskCategory.PhotoVideo, "Photo & Video", SsmIcons.PhotoVideo, "#f59e0b"),
+        new(TaskCategory.WritingEditing, "Writing", SsmIcons.WritingEditing, "#16a34a"),
+        new(TaskCategory.LanguageHelp, "Language", SsmIcons.LanguageHelp, "#0891b2"),
     };
 
     protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        CmdState.OnCommand += HandleCommandAsync;
         if (_userState.IsAuthenticated && _userState.CurrentUser != null)
         {
             var u = _userState.CurrentUser;
@@ -558,12 +566,86 @@
         if (firstRender) { await Task.Delay(500); await ApplyFilters(); }
     }
 
-    public void Dispose() { Navigation.LocationChanged -= OnLocationChanged; _debounceTimer?.Dispose(); }
+    public void Dispose() { Navigation.LocationChanged -= OnLocationChanged; CmdState.OnCommand -= HandleCommandAsync; _debounceTimer?.Dispose(); }
+
+    // ── AI command bar: apply a one-shot natural-language command to the map ──
+    private async Task HandleCommandAsync(MapCommand cmd)
+    {
+        if (cmd.Remote == true) _viewMode = "remote";
+        else if (cmd.Remote == false) _viewMode = "onsite";
+
+        _displayType = "tasks";
+        _selectedCategories = cmd.Categories.Count > 0
+            ? new HashSet<TaskCategory?>(cmd.Categories.Select(c => (TaskCategory?)c))
+            : new HashSet<TaskCategory?>();
+        _selectedStatuses = new HashSet<SkillTaskStatus?>();
+        _urgentOnly = cmd.UrgentOnly;
+        _sortByBudget = cmd.SortByBudgetDesc;
+
+        if (_viewMode == "onsite")
+        {
+            if (!_isMapExpanded) await OpenMapOverlay();
+            else await ApplyFilters();
+        }
+        else
+        {
+            await ApplyFilters();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // ── Passive intelligence layer: pick the best-matching visible tasks ──
+    private async Task ComputeAiPicksAsync()
+    {
+        _aiPickIds = new HashSet<int>();
+        if (_visibleTasks.Count == 0) return;
+
+        var matchCats = new HashSet<TaskCategory>();
+        if (_userState.IsAuthenticated && _userState.CurrentUser != null)
+        {
+            try
+            {
+                var recs = await AIService.GetRecommendedTasksAsync(_userState.CurrentUser.Id);
+                foreach (var r in recs) matchCats.Add(r.Category);
+            }
+            catch { /* fall back to budget/urgency scoring below */ }
+        }
+
+        var ranked = _visibleTasks
+            .Select(t => new
+            {
+                Task = t,
+                Score = (matchCats.Contains(t.Category) ? 1000 : 0) + (double)t.Budget + (t.IsUrgent ? 50 : 0)
+            })
+            .OrderByDescending(x => x.Score)
+            .ToList();
+
+        // Prefer genuine category matches; otherwise spotlight the strongest 1-2 by value.
+        var picks = ranked.Where(x => matchCats.Contains(x.Task.Category)).Take(3).ToList();
+        if (picks.Count == 0) picks = ranked.Take(Math.Min(2, ranked.Count)).ToList();
+        foreach (var p in picks) _aiPickIds.Add(p.Task.Id);
+    }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        if (e.Location.EndsWith("/") || e.Location.EndsWith("/index"))
-            InvokeAsync(async () => { await LoadData(); await ApplyFilters(); });
+        var wantsMap = e.Location.Contains("view=map", StringComparison.OrdinalIgnoreCase);
+        InvokeAsync(async () =>
+        {
+            if (!wantsMap && _isMapExpanded)
+            {
+                // Navigating away from the map view (e.g. clicking "Home") closes the overlay.
+                _isMapExpanded = false; _selectedTask = null; _selectedJob = null;
+                StateHasChanged();
+            }
+            else if (wantsMap && !_isMapExpanded)
+            {
+                await OpenMapOverlay(pushUrl: false);
+            }
+            if (!wantsMap)
+            {
+                await LoadData(); await ApplyFilters();
+            }
+        });
     }
 
     private async Task LoadData()
@@ -577,13 +659,21 @@
         _featuredTasks = _allTasks.Where(t => t.Status == SkillTaskStatus.Open).OrderByDescending(t => t.CreatedAt).Take(6).ToList();
     }
 
-    private async Task OpenMapOverlay()
+    private async Task OpenMapOverlay(bool pushUrl = true)
     {
+        // Reflect the map view in the URL so the browser back button and the
+        // top-nav "Home" link both cleanly exit the fullscreen map.
+        if (pushUrl)
+            Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("view", "map"), forceLoad: false);
         _isMapExpanded = true; _isFilterOpen = true; StateHasChanged();
         await Task.Delay(400); await ApplyFilters();
     }
 
-    private void CloseMapOverlay() { _isMapExpanded = false; _selectedTask = null; _selectedJob = null; StateHasChanged(); }
+    private void CloseMapOverlay()
+    {
+        _isMapExpanded = false; _selectedTask = null; _selectedJob = null; StateHasChanged();
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("view", (string?)null), forceLoad: false);
+    }
 
     private async Task ApplyFilters()
     {
@@ -598,16 +688,27 @@
         var q = _allTasks.Where(t => t.Status != SkillTaskStatus.Cancelled && t.Status != SkillTaskStatus.Completed);
         if (_selectedCategories.Any()) q = q.Where(t => _selectedCategories.Contains(t.Category));
         if (_selectedStatuses.Any()) q = q.Where(t => _selectedStatuses.Contains(t.Status));
+        if (_urgentOnly) q = q.Where(t => t.IsUrgent);
 
         if (_viewMode == "onsite")
         {
             _visibleTasks = q.Where(t => t.LocationType == TaskLocationType.OnSite && t.Latitude.HasValue && t.Longitude.HasValue)
                 .Where(t => GeoService.CalculateDistance(_userLat, _userLng, t.Latitude!.Value, t.Longitude!.Value) <= _distanceKm).ToList();
+            if (_sortByBudget) _visibleTasks = _visibleTasks.OrderByDescending(t => t.Budget).ToList();
+
+            await ComputeAiPicksAsync();
+
             if (_mapComponent != null)
             {
                 bool h = false;
-                foreach (var t in _visibleTasks) { await _mapComponent.AddMarkerAsync(t.Id, t.Latitude!.Value, t.Longitude!.Value, t.Title, "task"); h = true; }
+                foreach (var t in _visibleTasks)
+                {
+                    await _mapComponent.AddMarkerAsync(t.Id, t.Latitude!.Value, t.Longitude!.Value, t.Title, "task",
+                        t.Category.ToString(), t.IsUrgent || t.Budget >= 100, _aiPickIds.Contains(t.Id));
+                    h = true;
+                }
                 if (h) await _mapComponent.FitBoundsAsync(); else await _mapComponent.SetViewAsync(_userLat, _userLng, 13);
+                if (_aiPickIds.Count > 0) await _mapComponent.ScanSweepAsync();
             }
             if (!_visibleTasks.Any()) _noResultsMessage = $"No tasks found within {_distanceKm} km.";
         }
@@ -616,6 +717,8 @@
             if (!string.IsNullOrWhiteSpace(_remoteSearchText))
                 q = q.Where(t => t.Title.Contains(_remoteSearchText, StringComparison.OrdinalIgnoreCase) || t.Description.Contains(_remoteSearchText, StringComparison.OrdinalIgnoreCase));
             _visibleTasks = q.Where(t => t.LocationType == TaskLocationType.Remote).OrderByDescending(t => t.CreatedAt).ToList();
+            if (_sortByBudget) _visibleTasks = _visibleTasks.OrderByDescending(t => t.Budget).ToList();
+            await ComputeAiPicksAsync();
         }
     }
 
@@ -653,6 +756,7 @@
     {
         _selectedCategories = new HashSet<TaskCategory?>(); _selectedStatuses = new HashSet<SkillTaskStatus?>();
         _distanceKm = 15; _selectedTask = null; _selectedJob = null; _noResultsMessage = null; _remoteSearchText = "";
+        _urgentOnly = false; _sortByBudget = false;
         await ApplyFilters();
     }
 
@@ -731,7 +835,7 @@
     .map-preview-wrapper { cursor: pointer; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; transition: all 0.3s ease; }
     .map-preview-wrapper:hover { box-shadow: 0 8px 40px rgba(0,0,0,0.12); transform: translateY(-2px); }
     .map-preview-wrapper:hover .map-preview-overlay { opacity: 1; }
-    .map-preview-inner { position: relative; height: 400px; }
+    .map-preview-inner { position: relative; height: 540px; }
     .map-preview-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 10; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
 
     .step-icon-circle { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; }

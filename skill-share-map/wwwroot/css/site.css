@@ -27,17 +27,453 @@ a, .btn-link { color: #0071c1; }
    MAP MARKERS
    ═══════════════════════════════════════════════════════════ */
 
-@keyframes jump-marker {
-    0%, 100% { transform: translateY(0); animation-timing-function: ease-in; }
-    50% { transform: translateY(-12px); animation-timing-function: ease-out; }
+/* Skill node tiles — clean monochrome icon on a flat white tile by default;
+   the category color + "glass" gradient only appears on hover. Icon SVGs come
+   from SsmIcons.cs / map.js (stroke = currentColor). */
+.ssm-node-marker { background: transparent; border: none; overflow: visible; }
+
+.ssm-node {
+    position: relative;
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
 }
 
-.custom-svg-marker { background: transparent; border: none; }
-.custom-svg-marker svg {
-    display: block; transition: transform 0.2s ease-in-out; cursor: pointer;
-    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+/* default: clean round "pin" with a soft cream-white face + monochrome icon.
+   A round shape sits more naturally on the map than a square tile. */
+.ssm-node-core {
+    position: relative; z-index: 2;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #46587a;
+    background: radial-gradient(120% 120% at 50% 22%, #ffffff 0%, #f4f7fd 72%, #e9eff8 100%);
+    border: 1px solid rgba(74,117,176,0.22);
+    box-shadow: 0 3px 8px rgba(20,40,80,0.16), 0 1px 2px rgba(20,40,80,0.10);
+    transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+                box-shadow 0.22s ease, background 0.22s ease, color 0.22s ease, border-color 0.22s ease;
 }
-.custom-svg-marker:hover svg { animation: jump-marker 0.5s infinite; }
+.ssm-node-core svg { width: 21px; height: 21px; display: block; }
+
+/* glow halo — hidden until hover / special states (always brand-blue) */
+.ssm-node-halo {
+    position: absolute; inset: 0; margin: auto;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle, var(--ssm-glow) 0%, transparent 68%);
+    opacity: 0; z-index: 1; filter: blur(3px);
+    transition: opacity 0.25s ease;
+}
+@keyframes ssm-node-breathe {
+    0%, 100% { transform: scale(0.85); opacity: 0.30; }
+    50%      { transform: scale(1.18); opacity: 0.52; }
+}
+
+/* hover → theme-blue glass orb + white icon + blue glow (never category-yellow) */
+.ssm-node-marker:hover { z-index: 1000 !important; }
+.ssm-node-marker:hover .ssm-node-core {
+    transform: translateY(-3px) scale(1.28);
+    color: #ffffff;
+    background: radial-gradient(125% 125% at 50% 20%, #cfe0ff 0%, #6ea8ff 46%, #4a75b0 100%);
+    border-color: rgba(255,255,255,0.85);
+    box-shadow:
+        0 12px 22px rgba(20,40,80,0.28),
+        0 0 0 4px rgba(110,168,255,0.28),
+        0 0 20px 4px rgba(110,168,255,0.6),
+        inset 0 1px 3px rgba(255,255,255,0.7);
+}
+.ssm-node-marker:hover .ssm-node-halo {
+    opacity: 0.6; animation: ssm-node-breathe 2.4s ease-in-out infinite;
+}
+
+/* Rare (urgent / high-budget) — subtle gold accent ring at rest; hover still
+   resolves to the brand-blue orb above (no yellow fill on hover). */
+.ssm-node.rare .ssm-node-core {
+    border-color: rgba(246,196,69,0.85);
+    box-shadow: 0 3px 8px rgba(20,40,80,0.16), 0 0 0 2px rgba(246,196,69,0.45), 0 0 10px 1px rgba(246,196,69,0.35);
+}
+
+/* Light-up burst when a node is clicked / a task is accepted */
+.ssm-node-core.accepted { animation: ssm-node-accept 0.7s ease; }
+@keyframes ssm-node-accept {
+    0%   { transform: scale(1); filter: brightness(1); }
+    30%  { transform: scale(1.7); filter: brightness(1.6); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* AI optimal pick — persistent brand-blue glass + white icon + glow + "AI" emblem */
+.ssm-node.ai .ssm-node-core {
+    color: #ffffff;
+    background: linear-gradient(145deg, #9ec2ff 0%, #4a75b0 82%);
+    border-color: rgba(255,255,255,0.8);
+    box-shadow:
+        0 6px 16px rgba(20,40,80,0.26),
+        0 0 0 3px rgba(110,168,255,0.55),
+        0 0 18px 4px rgba(110,168,255,0.6),
+        inset 0 1px 2px rgba(255,255,255,0.6);
+    animation: ssm-ai-glow 1.9s ease-in-out infinite;
+}
+.ssm-node.ai .ssm-node-halo {
+    background: radial-gradient(circle, var(--ssm-glow) 0%, transparent 68%); opacity: 0.55;
+    animation: ssm-node-breathe 2.4s ease-in-out infinite;
+}
+.ssm-node-ai {
+    position: absolute; z-index: 3; top: -7px; right: -9px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.5px;
+    color: #ffffff; background: linear-gradient(135deg, var(--ssm-glow), var(--ssm-brand));
+    padding: 1px 4px; border-radius: 6px;
+    border: 1px solid #dce9ff;
+    box-shadow: 0 0 8px rgba(110,168,255,0.9);
+}
+@keyframes ssm-ai-glow {
+    0%, 100% { box-shadow: 0 6px 16px rgba(20,40,80,0.26), 0 0 0 3px rgba(110,168,255,0.55), 0 0 16px 3px rgba(110,168,255,0.5), inset 0 1px 2px rgba(255,255,255,0.6); }
+    50%      { box-shadow: 0 8px 20px rgba(20,40,80,0.3),  0 0 0 3px rgba(110,168,255,0.85), 0 0 28px 7px rgba(110,168,255,0.65), inset 0 1px 2px rgba(255,255,255,0.6); }
+}
+
+/* ── Home "Browse by Category" tiles — same flat→glass language as the map ── */
+.ssm-cat-card {
+    border: 1px solid rgba(20,40,80,0.07);
+    background: #ffffff;
+    transition: transform 0.24s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.24s ease;
+}
+.ssm-cat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 34px rgba(20,40,80,0.14);
+}
+.ssm-cat-tile {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 16px;
+    color: var(--cat-color);
+    background: color-mix(in srgb, var(--cat-color) 10%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 18%, transparent);
+    transition: transform 0.24s cubic-bezier(0.34,1.56,0.64,1),
+                background 0.24s ease, color 0.24s ease, box-shadow 0.24s ease;
+}
+.ssm-cat-card:hover .ssm-cat-tile {
+    color: #ffffff;
+    background: linear-gradient(145deg,
+        color-mix(in srgb, var(--cat-color) 62%, #ffffff) 0%, var(--cat-color) 80%);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--cat-color) 38%, transparent),
+                0 0 16px 2px color-mix(in srgb, var(--cat-color) 45%, transparent);
+    transform: scale(1.06);
+}
+.ssm-cat-tile .mud-icon-root { width: 30px; height: 30px; font-size: 30px; }
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL AI COMMAND BAR  —  jellyfish launcher + ⌘K spotlight
+   Brand palette: greyish-blue #4a75b0 / #7B9CC9 + soft glow #6ea8ff
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --ssm-brand:  #4a75b0;
+    --ssm-brand2: #7B9CC9;
+    --ssm-glow:   #6ea8ff;
+    --ssm-glow-soft: #bcd4ff;
+    --neon:  #6ea8ff;   /* legacy alias kept for existing refs */
+    --neon2: #4a75b0;
+}
+
+/* ── Launcher: cute glowing jellyfish that drifts in place ── */
+.ssm-cmd-orb {
+    position: fixed; right: 28px; bottom: 28px; z-index: 3000;
+    width: 70px; height: 84px;
+    border: none; background: transparent; padding: 0;
+    cursor: pointer;
+    filter: drop-shadow(0 10px 16px rgba(74,117,176,0.35));
+    animation: ssm-jelly-float 4.6s ease-in-out infinite;
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes ssm-jelly-float {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50%      { transform: translateY(-11px) rotate(1.5deg); }
+}
+.ssm-cmd-orb:hover { transform: translateY(-6px) scale(1.07); animation-play-state: paused; }
+.ssm-cmd-orb.active { transform: scale(0.93); }
+
+/* Ambient glow halo behind the bell */
+.ssm-jelly-glow {
+    position: absolute; left: 50%; top: 32%; transform: translate(-50%,-50%);
+    width: 86px; height: 86px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(110,168,255,0.55) 0%, rgba(123,156,201,0.26) 42%, transparent 70%);
+    filter: blur(5px); z-index: 1;
+    animation: ssm-jelly-glowpulse 3.2s ease-in-out infinite;
+}
+@keyframes ssm-jelly-glowpulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%,-50%) scale(0.9); }
+    50%      { opacity: 1;   transform: translate(-50%,-50%) scale(1.12); }
+}
+
+/* Translucent 3D bell / dome */
+.ssm-jelly-bell {
+    position: absolute; left: 50%; top: 6px; transform: translateX(-50%);
+    width: 50px; height: 40px; z-index: 2;
+    border-radius: 50% 50% 42% 42% / 60% 60% 40% 40%;
+    background: radial-gradient(125% 95% at 50% 18%,
+                #ffffff 0%, #dfeaff 26%, #9ec2ff 58%, #6ea8ff 80%, #4a75b0 100%);
+    border: 1.5px solid rgba(255,255,255,0.75);
+    box-shadow:
+        inset 0 6px 11px rgba(255,255,255,0.65),
+        inset 0 -9px 15px rgba(74,117,176,0.5),
+        0 0 20px rgba(110,168,255,0.55);
+    overflow: hidden;
+    animation: ssm-jelly-squish 4.6s ease-in-out infinite;
+}
+.ssm-jelly-bell::before {
+    content: ''; position: absolute; top: 6px; left: 10px;
+    width: 17px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.88); filter: blur(1px);
+}
+@keyframes ssm-jelly-squish {
+    0%, 100% { transform: translateX(-50%) scaleY(1)    scaleX(1); }
+    50%      { transform: translateX(-50%) scaleY(0.88) scaleX(1.06); }
+}
+
+/* Cute blinking eyes (inside the bell) */
+.ssm-jelly-eyes {
+    position: absolute; z-index: 3; left: 50%; top: 18px; transform: translateX(-50%);
+    display: flex; gap: 11px;
+}
+.ssm-jelly-eyes i {
+    width: 4px; height: 6px; border-radius: 50%;
+    background: #2a3a59; display: block;
+    box-shadow: 0 0 3px rgba(0,0,0,0.25);
+    animation: ssm-jelly-blink 5.2s infinite;
+}
+@keyframes ssm-jelly-blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    96%           { transform: scaleY(0.12); }
+}
+
+/* Wavy glowing tentacles */
+.ssm-jelly-tentacles {
+    position: absolute; z-index: 2; left: 50%; top: 41px; transform: translateX(-50%);
+    width: 44px; height: 30px;
+}
+.ssm-jelly-tentacles i {
+    position: absolute; top: 0; width: 3px; border-radius: 3px;
+    background: linear-gradient(180deg, rgba(110,168,255,0.95), rgba(110,168,255,0));
+    transform-origin: top center;
+    animation: ssm-jelly-sway 2.8s ease-in-out infinite;
+}
+.ssm-jelly-tentacles i:nth-child(1) { left: 5px;  height: 22px; animation-delay: 0s; }
+.ssm-jelly-tentacles i:nth-child(2) { left: 14px; height: 28px; animation-delay: 0.25s; }
+.ssm-jelly-tentacles i:nth-child(3) { left: 22px; height: 30px; animation-delay: 0.5s; }
+.ssm-jelly-tentacles i:nth-child(4) { left: 30px; height: 26px; animation-delay: 0.35s; }
+.ssm-jelly-tentacles i:nth-child(5) { left: 39px; height: 21px; animation-delay: 0.15s; }
+@keyframes ssm-jelly-sway {
+    0%, 100% { transform: rotate(-9deg); }
+    50%      { transform: rotate(9deg); }
+}
+
+.ssm-cmd-kbd {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    font-size: 9px; font-weight: 700; letter-spacing: 0.5px; z-index: 4;
+    color: #2a3a59; background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(110,168,255,0.5); border-radius: 6px;
+    padding: 1px 5px; box-shadow: 0 2px 8px rgba(74,117,176,0.3);
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+/* Backdrop dim */
+.ssm-cmd-backdrop {
+    position: fixed; inset: 0; z-index: 3500;
+    background: radial-gradient(ellipse at 50% 38%, rgba(26,42,72,0.5), rgba(10,18,36,0.74));
+    backdrop-filter: blur(4px);
+    animation: ssm-cmd-fade 0.18s ease;
+}
+@keyframes ssm-cmd-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Spotlight palette — deep brand-blue glass with a diffuse inner glow */
+.ssm-cmd-palette {
+    position: fixed; z-index: 3600;
+    top: 18vh; left: 50%; transform: translateX(-50%);
+    width: 560px; max-width: calc(100vw - 36px);
+    padding: 18px 18px 14px;
+    background: linear-gradient(180deg, rgba(28,44,76,0.96) 0%, rgba(18,30,54,0.97) 100%);
+    border: 1px solid rgba(110,168,255,0.32);
+    border-radius: 20px;
+    box-shadow: 0 0 60px rgba(74,117,176,0.35), 0 24px 70px rgba(8,16,32,0.55);
+    backdrop-filter: blur(18px);
+    overflow: hidden;
+    font-family: 'IBM Plex Sans', sans-serif;
+    animation: ssm-cmd-pop 0.26s cubic-bezier(0.16,1,0.3,1);
+}
+/* diffuse colored blobs inside the glass */
+.ssm-cmd-palette::before {
+    content: ''; position: absolute; inset: -40% -10% auto -10%; height: 200px; z-index: 0;
+    background:
+        radial-gradient(40% 60% at 18% 0%, rgba(110,168,255,0.22), transparent 70%),
+        radial-gradient(44% 64% at 86% 6%, rgba(123,156,201,0.2), transparent 70%);
+    pointer-events: none;
+}
+.ssm-cmd-palette > * { position: relative; z-index: 1; }
+@keyframes ssm-cmd-pop {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.96); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+/* Scanline shimmer across the top */
+.ssm-cmd-scan {
+    position: absolute; top: 0; left: -40%; width: 40%; height: 2px; z-index: 2;
+    background: linear-gradient(90deg, transparent, var(--ssm-glow), transparent);
+    box-shadow: 0 0 12px var(--ssm-glow);
+    animation: ssm-cmd-scanmove 2.6s linear infinite;
+}
+@keyframes ssm-cmd-scanmove { 0% { left: -40%; } 100% { left: 100%; } }
+
+.ssm-cmd-inputrow {
+    display: flex; align-items: center; gap: 12px;
+    padding: 6px 4px 12px;
+    border-bottom: 1px solid rgba(110,168,255,0.2);
+}
+.ssm-cmd-glyph {
+    font-size: 18px; color: var(--ssm-glow);
+    text-shadow: 0 0 10px var(--ssm-glow);
+    animation: ssm-jelly-glowpulse 2.4s ease-in-out infinite;
+}
+.ssm-cmd-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #eaf1ff; font-size: 18px; font-weight: 500; font-family: inherit;
+    letter-spacing: 0.2px;
+}
+.ssm-cmd-input::placeholder { color: #7387a8; }
+.ssm-cmd-enter {
+    color: #aecbff; font-size: 16px;
+    border: 1px solid rgba(110,168,255,0.38); border-radius: 7px;
+    padding: 2px 7px; box-shadow: 0 0 10px rgba(110,168,255,0.25);
+}
+.ssm-cmd-spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(110,168,255,0.25); border-top-color: var(--ssm-glow);
+    animation: ssm-cmd-spin 0.7s linear infinite;
+}
+@keyframes ssm-cmd-spin { to { transform: rotate(360deg); } }
+
+.ssm-cmd-preview {
+    margin-top: 10px; padding: 8px 12px;
+    background: rgba(110,168,255,0.1); border: 1px solid rgba(110,168,255,0.24);
+    border-radius: 12px; color: #cfe0ff; font-size: 13px;
+    box-shadow: 0 0 16px rgba(110,168,255,0.18);
+}
+
+.ssm-cmd-section {
+    margin-top: 14px; margin-bottom: 8px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #8398bd;
+}
+.ssm-cmd-suggest { display: flex; flex-wrap: wrap; gap: 8px; }
+.ssm-cmd-chip {
+    border: 1px solid rgba(110,168,255,0.35); background: rgba(110,168,255,0.09); color: #d4e2ff;
+    border-radius: 999px; padding: 7px 13px; font-size: 13px; cursor: pointer;
+    font-family: inherit; transition: all 0.18s ease;
+}
+.ssm-cmd-chip:hover:not(:disabled) {
+    background: var(--ssm-glow); color: #0f1d36; border-color: var(--ssm-glow);
+    box-shadow: 0 0 16px rgba(110,168,255,0.6); transform: translateY(-1px);
+}
+.ssm-cmd-chip:disabled { opacity: 0.5; cursor: default; }
+
+.ssm-cmd-foot {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 16px; padding-top: 10px;
+    border-top: 1px solid rgba(110,168,255,0.14);
+    font-size: 11px; color: #8398bd;
+}
+.ssm-cmd-foot kbd {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(110,168,255,0.28);
+    border-radius: 4px; padding: 1px 5px; color: #aecbff; font-size: 10px;
+}
+.ssm-cmd-brand {
+    margin-left: auto; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #aecbff; text-shadow: 0 0 10px rgba(110,168,255,0.4); font-weight: 600;
+}
+
+/* Glowing "AI MATCH" badge on task cards */
+.ssm-match-badge {
+    display: inline-flex; align-items: center;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.6px;
+    color: #ffffff; background: linear-gradient(135deg, var(--ssm-glow), var(--ssm-brand));
+    padding: 2px 9px; border-radius: 999px;
+    box-shadow: 0 0 12px rgba(110,168,255,0.65);
+    animation: ssm-badge-glow 1.8s ease-in-out infinite;
+}
+@keyframes ssm-badge-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(110,168,255,0.5); }
+    50%      { box-shadow: 0 0 18px rgba(110,168,255,0.9); }
+}
+
+/* AI scanning sweep overlay (added to the Leaflet container) */
+.ssm-map-scan {
+    position: absolute; inset: 0; z-index: 650; pointer-events: none;
+    background: linear-gradient(105deg, transparent 38%, rgba(110,168,255,0.2) 50%, transparent 62%);
+    background-size: 220% 100%;
+    animation: ssm-map-sweep 1.6s ease-out forwards;
+}
+@keyframes ssm-map-sweep {
+    0%   { background-position: 140% 0; opacity: 0; }
+    15%  { opacity: 1; }
+    100% { background-position: -120% 0; opacity: 0; }
+}
+
+@media (max-width: 480px) {
+    .ssm-cmd-orb { right: 16px; bottom: 16px; }
+    .ssm-cmd-palette { top: 12vh; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ATMOSPHERE  —  diffuse background, liquid buttons, breathing layout
+   ═══════════════════════════════════════════════════════════ */
+
+/* Soft diffuse aurora behind everything (弥散感) */
+body::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+        radial-gradient(70% 66% at 18% 2%,  rgba(110,168,255,0.07), transparent 80%),
+        radial-gradient(74% 68% at 86% 0%,  rgba(123,156,201,0.06), transparent 82%),
+        radial-gradient(80% 74% at 84% 100%, rgba(74,117,176,0.05),  transparent 84%),
+        radial-gradient(76% 70% at 2% 98%,  rgba(150,196,255,0.045), transparent 84%),
+        linear-gradient(180deg, #f4f7fc 0%, #eef3fb 100%);
+    animation: ssm-aurora 30s ease-in-out infinite alternate;
+}
+@keyframes ssm-aurora {
+    0%   { transform: scale(1)    translate(0, 0); }
+    100% { transform: scale(1.05) translate(-1%, 0.8%); }
+}
+
+/* Subtle cursor-following ambient glow (轻微的跟随效果) — sits behind content */
+.ssm-cursor-glow {
+    position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(110,168,255,0.12) 0%, rgba(123,156,201,0.05) 40%, transparent 70%);
+    filter: blur(14px);
+    opacity: 0; transition: opacity 0.5s ease;
+    will-change: transform;
+}
+
+/* Let the diffuse background breathe through Mud surfaces */
+.mud-layout, .mud-main-content { background: transparent !important; }
+
+/* Liquid, floating buttons */
+.mud-button-root {
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1),
+                box-shadow 0.22s ease, filter 0.22s ease !important;
+    border-radius: 12px !important;
+}
+.mud-button-root:hover { transform: translateY(-2px); }
+.mud-button-root:active { transform: translateY(0) scale(0.97); }
+.mud-button-filled { box-shadow: 0 6px 16px rgba(74,117,176,0.26) !important; }
+.mud-button-filled:hover {
+    box-shadow: 0 11px 26px rgba(74,117,176,0.4) !important;
+    filter: saturate(1.08) brightness(1.03);
+}
+
+/* Cards: softer rounding + gentle lift for a tactile, breathing feel */
+.mud-paper { border-radius: 16px; }
+.mud-card {
+    border-radius: 18px;
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+.mud-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgba(20,40,80,0.14) !important;
+}
 
 /* ═══════════════════════════════════════════════════════════
    LEAFLET OVERRIDES

@@ -25,11 +25,7 @@
             <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mx-2">/</MudText>
 
             <MudLink Href="/classroom" Class="nav-hover-effect">Classroom</MudLink>
-            
-            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mx-2">/</MudText>
 
-            <MudLink Href="/ai-assistant" Class="nav-hover-effect">AI Coach</MudLink>
-        
         </MudStack>
 
         <MudButton Variant="Variant.Filled" 
@@ -50,10 +46,10 @@
 
                  @if (UserState.IsAuthenticated)
                 {
-                    <MudMenu AnchorOrigin="Origin.BottomRight" 
+                    <MudMenu AnchorOrigin="Origin.BottomRight"
                              TransformOrigin="Origin.TopRight"
                              PopoverClass="menu-paper-rounded"
-                             ListClass="pa-3"
+                             ListClass="pa-0"
                              LockScroll="true">
         
                         <ActivatorContent>
@@ -70,27 +66,31 @@
                         </ActivatorContent>
 
                         <ChildContent>
-                            <div class="d-flex flex-column align-center justify-center pa-4 gap-2" style="border-radius: 15px; min-width: 200px; background-color: #f8f9fa;">
-                                <MudAvatar Color="Color.Primary" Size="Size.Large">
-                                    @UserState.CurrentUser?.Username?.Substring(0, 1).ToUpper()
-                                </MudAvatar>
-                                <MudText Typo="Typo.subtitle1" Class="fw-bold">@UserState.CurrentUser?.Username</MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">@UserState.CurrentUser?.Email</MudText>
+                            <div class="ssm-usermenu">
+                                <div class="ssm-usermenu-head">
+                                    <MudAvatar Color="Color.Primary" Class="ssm-usermenu-avatar">
+                                        @UserState.CurrentUser?.Username?.Substring(0, 1).ToUpper()
+                                    </MudAvatar>
+                                    <div class="ssm-usermenu-id">
+                                        <span class="ssm-usermenu-name">@UserState.CurrentUser?.Username</span>
+                                        <span class="ssm-usermenu-email">@UserState.CurrentUser?.Email</span>
+                                    </div>
+                                </div>
+
+                                <MudMenuItem Href="/profile" Class="ssm-usermenu-item" Icon="@Icons.Material.Outlined.Person">
+                                    Profile Details
+                                </MudMenuItem>
+
+                                <MudMenuItem Href="/wallet" Class="ssm-usermenu-item" Icon="@Icons.Material.Outlined.AccountBalanceWallet">
+                                    Wallet
+                                </MudMenuItem>
+
+                                <MudDivider Class="ssm-usermenu-divider" />
+
+                                <MudMenuItem OnClick="HandleLogout" Class="ssm-usermenu-item ssm-usermenu-danger" Icon="@Icons.Material.Outlined.Logout">
+                                    Sign Out
+                                </MudMenuItem>
                             </div>
-
-                            <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.PersonOutline">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Profile Details</MudText>
-                            </MudMenuItem>
-
-                            <MudMenuItem Href="/wallet" Icon="@Icons.Material.Filled.AccountBalanceWallet">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Wallet</MudText>
-                            </MudMenuItem>
-
-                            <MudDivider Class="my-1"/>
-
-                            <MudMenuItem OnClick="HandleLogout" Icon="@Icons.Material.Filled.Logout" IconColor="Color.Error">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Sign Out</MudText>
-                            </MudMenuItem>
                         </ChildContent>
                     </MudMenu>
                 }
@@ -118,6 +118,9 @@
     <MudMainContent Class="pt-20">
         @Body
     </MudMainContent>
+
+    @* Global AI command bar — single entry point, available on every page *@
+    <SkillShareMap.Shared.Components.CommandBar />
 </MudLayout>
 
 <style>
@@ -166,19 +169,75 @@
         color: #FFFFFF !important;
     }
 
-    /* 3. menu-rounded setting */
+    /* 3. Modern account dropdown */
     .menu-paper-rounded {
-        border-radius: 15px !important;
+        border-radius: 18px !important;
         overflow: hidden;
-        box-shadow: 0 0px 10px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 16px 40px rgba(20,30,50,0.18), 0 3px 10px rgba(20,30,50,0.08) !important;
+        border: 1px solid rgba(20,30,50,0.06);
     }
 
-    /* 4. ICON size in child menu */
-    .menu-paper-rounded .mud-icon-root {
-            font-size: 20px !important;
-            margin-right: 12px !important; 
-            min-width: 20px !important;
-        }
+    .ssm-usermenu { min-width: 252px; padding: 7px; }
+
+    .ssm-usermenu-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 12px;
+        margin-bottom: 5px;
+        border-radius: 13px;
+        background: linear-gradient(135deg, rgba(74,117,176,0.12), rgba(110,168,255,0.05));
+    }
+    .ssm-usermenu-avatar {
+        height: 44px !important;
+        width: 44px !important;
+        font-size: 18px !important;
+        font-weight: 600;
+        box-shadow: 0 5px 14px rgba(74,117,176,0.4);
+    }
+    .ssm-usermenu-id { display: flex; flex-direction: column; min-width: 0; }
+    .ssm-usermenu-name {
+        font-weight: 700;
+        font-size: 15px;
+        color: #1B1B1B;
+        line-height: 1.35;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 168px;
+    }
+    .ssm-usermenu-email {
+        font-size: 12px;
+        color: #8a96a8;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 168px;
+    }
+
+    .ssm-usermenu-item.mud-list-item {
+        border-radius: 10px;
+        padding: 9px 12px !important;
+        margin: 2px 0;
+        color: #33404f !important;
+        font-weight: 500;
+        font-size: 14px;
+        transition: background-color 0.18s ease, color 0.18s ease;
+    }
+    .ssm-usermenu-item.mud-list-item:hover {
+        background-color: rgba(74,117,176,0.10) !important;
+        color: #4a75b0 !important;
+    }
+    .ssm-usermenu-item .mud-icon-root {
+        font-size: 20px !important;
+        margin-right: 12px !important;
+        min-width: 20px !important;
+        color: #8a96a8;
+        transition: color 0.18s ease;
+    }
+    .ssm-usermenu-item:hover .mud-icon-root { color: #4a75b0; }
+
+    .ssm-usermenu-danger.mud-list-item:hover {
+        background-color: rgba(235,29,38,0.10) !important;
+        color: #EB1D26 !important;
+    }
+    .ssm-usermenu-danger:hover .mud-icon-root { color: #EB1D26 !important; }
+
+    .ssm-usermenu-divider { margin: 6px 4px !important; }
 
 </style>
 

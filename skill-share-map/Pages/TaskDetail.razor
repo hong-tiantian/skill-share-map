@@ -287,7 +287,7 @@ else
         if (firstRender && _task != null && _miniMap != null && _task.Latitude.HasValue && _task.Longitude.HasValue)
         {
             await Task.Delay(500);
-            await _miniMap.AddMarkerAsync(_task.Id, _task.Latitude.Value, _task.Longitude.Value, _task.Title, "task");
+            await _miniMap.AddMarkerAsync(_task.Id, _task.Latitude.Value, _task.Longitude.Value, _task.Title, "task", _task.Category.ToString(), _task.IsUrgent || _task.Budget >= 100);
         }
     }
 
