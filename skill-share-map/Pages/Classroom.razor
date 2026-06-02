@@ -5,6 +5,7 @@
 @using System.Linq
 @inject ICourseService CourseService
 @inject NavigationManager Navigation
+@inject CommandBarState CmdState
 
 <PageTitle>The Classroom - Skill Share Map</PageTitle>
 
@@ -68,10 +69,10 @@
         </div>
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
-                   Href="/ai-assistant"
+                   OnClick="@(() => CmdState.Open("Recommend tasks for me"))"
                    StartIcon="@Icons.Material.Filled.SmartToy"
                    Class="cr-ai-banner__btn">
-            Try AI Assistant
+            Ask Sage
         </MudButton>
     </div>
 

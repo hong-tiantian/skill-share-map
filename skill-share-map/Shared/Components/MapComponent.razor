@@ -35,9 +35,19 @@
         }
     }
 
-    public async Task AddMarkerAsync(int id, double lat, double lng, string title, string type = "task")
+    public async Task AddMarkerAsync(int id, double lat, double lng, string title, string type = "task", string? category = null, bool rare = false, bool aiPick = false)
     {
-        await JS.InvokeVoidAsync("mapHelper.addMarker", MapId, id, lat, lng, title, type);
+        await JS.InvokeVoidAsync("mapHelper.addMarker", MapId, id, lat, lng, title, type, category, rare, aiPick);
+    }
+
+    public async Task ScanSweepAsync()
+    {
+        await JS.InvokeVoidAsync("mapHelper.scanSweep", MapId);
+    }
+
+    public async Task LightUpMarkerAsync(int id)
+    {
+        await JS.InvokeVoidAsync("mapHelper.lightUpMarker", MapId, id);
     }
 
     public async Task ClearMarkersAsync()

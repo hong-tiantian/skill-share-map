@@ -10,8 +10,28 @@
 @inject NavigationManager Navigation
 @inject UserState UserState
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>My Profile</PageTitle>
+
+@* ── LEVEL UP celebration overlay ── *@
+@if (_showLevelUp)
+{
+    <div class="levelup-overlay" @onclick="@(() => _showLevelUp = false)">
+        <div class="levelup-card" @onclick:stopPropagation="true">
+            <div class="levelup-ring">
+                <span class="levelup-ring-num">@_levelUpNewLevel</span>
+            </div>
+            <div class="levelup-title">LEVEL&nbsp;UP!</div>
+            <div class="levelup-sub">You reached <b>Level @_levelUpNewLevel</b> · @_levelUpTier</div>
+            <MudButton Variant="Variant.Filled"
+                       OnClick="@(() => _showLevelUp = false)"
+                       Style="background-color: #4a75b0; color: white; border-radius: 12px; font-weight: 700; text-transform: none; padding: 8px 32px; margin-top: 20px;">
+                Continue
+            </MudButton>
+        </div>
+    </div>
+}
 
 <MudContainer MaxWidth="MaxWidth.False" Class="pt-8 px-12 pb-16">
     @if (_isLoading)
@@ -395,7 +415,7 @@
                         <MudItem xs="6" md="3">
                             <MudPaper Elevation="0" Class="pa-4 rounded-xl d-flex flex-column align-center" Style="background-color: #F8F9FA; border: 1px solid #e0e0e0;">
                                 <MudIcon Icon="@Icons.Material.Filled.Bolt" Style="color: #f6c445; font-size: 28px;" />
-                                <MudText Typo="Typo.h5" Class="mt-2" Style="font-weight: 700; color: #1B1B1B;">@_totalXp</MudText>
+                                <MudText Typo="Typo.h5" Class="mt-2" Style="font-weight: 700; color: #1B1B1B;"><span id="xp-total-number">@_totalXp</span></MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Total XP</MudText>
                             </MudPaper>
                         </MudItem>
@@ -418,8 +438,10 @@
                     @* ── Overall Level & XP Bar ── *@
                     <MudPaper Elevation="0" Class="pa-6 mb-6 rounded-xl" Style="border: 1px solid #e0e0e0;">
                         <div class="d-flex align-center mb-4">
-                            <div class="d-flex align-center justify-center rounded-circle mr-4"
-                                 style="width: 56px; height: 56px; background-color: #2b2b3d; border: 3px solid #4a75b0;">
+                            <div class="d-flex align-center justify-center rounded-circle mr-4 level-circle"
+                                 @onclick="@(() => TriggerLevelUp(_userLevel))"
+                                 title="Tap to replay"
+                                 style="width: 56px; height: 56px; background-color: #2b2b3d; border: 3px solid #4a75b0; cursor: pointer;">
                                 <MudText Typo="Typo.h6" Style="color: white; font-weight: 700;">@_userLevel</MudText>
                             </div>
                             <div style="flex: 1;">
@@ -429,8 +451,8 @@
                                         @_totalXp / @_nextLevelXp XP
                                     </MudText>
                                 </div>
-                                <MudProgressLinear Value="@_levelProgress" Color="Color.Primary" Rounded="true" Size="Size.Medium" 
-                                                   Style="height: 10px;" />
+                                <MudProgressLinear Value="@_displayLevelProgress" Color="Color.Primary" Rounded="true" Size="Size.Medium"
+                                                   Class="xp-bar" Style="height: 10px;" />
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
                                     @(_nextLevelXp - _totalXp) XP to Level @(_userLevel + 1)
                                 </MudText>
@@ -861,6 +883,97 @@
         border-bottom-color: #4a75b0 !important;
         border-bottom-width: 1px !important;
     }
+
+    /* ── XP bar fill animation ── */
+    .xp-bar .mud-progress-linear-bar {
+        transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .level-circle {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .level-circle:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 16px rgba(74, 117, 176, 0.6);
+    }
+
+    /* ── LEVEL UP overlay ── */
+    .levelup-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 3500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(ellipse at center, rgba(43, 43, 61, 0.82) 0%, rgba(15, 15, 22, 0.92) 100%);
+        backdrop-filter: blur(4px);
+        animation: levelupFade 0.3s ease;
+        cursor: pointer;
+    }
+    @@keyframes levelupFade { from { opacity: 0; } to { opacity: 1; } }
+
+    .levelup-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 8px;
+        cursor: default;
+        animation: levelupPop 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes levelupPop {
+        0% { opacity: 0; transform: scale(0.6) translateY(30px); }
+        60% { opacity: 1; transform: scale(1.06) translateY(0); }
+        100% { transform: scale(1); }
+    }
+
+    .levelup-ring {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #2b2b3d;
+        border: 5px solid #4a75b0;
+        box-shadow: 0 0 0 0 rgba(74, 117, 176, 0.7);
+        animation: levelupGlow 1.6s ease-in-out infinite;
+        margin-bottom: 24px;
+    }
+    @@keyframes levelupGlow {
+        0%   { box-shadow: 0 0 18px 4px rgba(74, 117, 176, 0.55), 0 0 0 0 rgba(74, 117, 176, 0.5); }
+        50%  { box-shadow: 0 0 38px 10px rgba(122, 162, 250, 0.85), 0 0 0 18px rgba(74, 117, 176, 0); }
+        100% { box-shadow: 0 0 18px 4px rgba(74, 117, 176, 0.55), 0 0 0 0 rgba(74, 117, 176, 0); }
+    }
+    .levelup-ring-num {
+        font-size: 56px;
+        font-weight: 800;
+        color: #ffffff;
+        font-family: 'Mona Sans', 'IBM Plex Sans', sans-serif;
+        line-height: 1;
+    }
+
+    .levelup-title {
+        font-size: 48px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        font-family: 'Mona Sans', 'IBM Plex Sans', sans-serif;
+        background: linear-gradient(90deg, #7da0fa, #a0e548, #f6c445);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: levelupShine 2.5s linear infinite;
+        background-size: 200% auto;
+    }
+    @@keyframes levelupShine {
+        to { background-position: 200% center; }
+    }
+    .levelup-sub {
+        color: #d0d4dd;
+        font-size: 18px;
+        margin-top: 10px;
+        font-family: 'IBM Plex Sans', sans-serif;
+    }
 </style>
 
     @code {
@@ -921,6 +1034,13 @@
     private int _completedTaskCount = 0;
     private int _userStreak = 0; // Simulated streak
 
+    // Level-up celebration state
+    private double _displayLevelProgress = 0;
+    private bool _progressAnimated = false;
+    private bool _showLevelUp = false;
+    private int _levelUpNewLevel = 0;
+    private string _levelUpTier = "";
+
     // Tier Roadmap data
     private List<(string name, int minXp, string color)> _tierRoadmap = new()
     {
@@ -941,6 +1061,58 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadProfile();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Animate the Progress tab once each time it becomes active.
+        if (_activeTab == "Progress" && !_progressAnimated && _user != null && _user.Role == UserRole.Student)
+        {
+            _progressAnimated = true;
+            await AnimateProgress();
+        }
+        else if (_activeTab != "Progress" && _progressAnimated)
+        {
+            _progressAnimated = false;
+            _displayLevelProgress = 0; // reset so the bar re-fills on next visit
+        }
+    }
+
+    private async Task AnimateProgress()
+    {
+        try
+        {
+            // Roll the Total XP number up from 0.
+            await JS.InvokeVoidAsync("ssmCelebrate.countUp", "xp-total-number", 0, _totalXp, 1200);
+
+            // Fill the level progress bar (starts at 0, CSS transitions to target).
+            _displayLevelProgress = _levelProgress;
+            StateHasChanged();
+
+            // Detect a level-up since the user last viewed this page.
+            int lastXp = await JS.InvokeAsync<int>("ssmCelebrate.getLastSeenXp", _user!.Id);
+            await JS.InvokeVoidAsync("ssmCelebrate.setLastSeenXp", _user.Id, _totalXp);
+
+            if (lastXp >= 0)
+            {
+                int lastLevel = Math.Max(1, lastXp / 100 + 1);
+                if (_userLevel > lastLevel)
+                {
+                    await TriggerLevelUp(_userLevel);
+                }
+            }
+        }
+        catch (JSException) { /* JS not ready / prerender — ignore */ }
+    }
+
+    private async Task TriggerLevelUp(int level)
+    {
+        _levelUpNewLevel = level;
+        _levelUpTier = GetTierInfo(_totalXp).name;
+        _showLevelUp = true;
+        StateHasChanged();
+        try { await JS.InvokeVoidAsync("ssmCelebrate.confetti", 2800); }
+        catch (JSException) { }
     }
 
     private async Task LoadProfile()

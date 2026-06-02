@@ -277,77 +277,155 @@ public static class SeedData
             new Course
             {
                 Title = "Introduction to Web Development",
-                Description = "Learn HTML, CSS, and JavaScript basics",
+                Description = "Learn HTML, CSS, and JavaScript to build your first responsive websites from scratch.",
                 Category = TaskCategory.TechHelp,
                 Type = CourseType.OnlineCourse,
                 Duration = "6 weeks",
                 Difficulty = DifficultyLevel.Beginner,
                 InstructorName = "Dr. Sarah Tech",
-                ImageUrl = "/images/courses/web-dev.svg",
+                ImageUrl = "https://images.pexels.com/photos/270404/pexels-photo-270404.jpeg?auto=compress&cs=tinysrgb&w=800",
                 ExternalUrl = "https://example.com/web-dev"
             },
             new Course
             {
-                Title = "Photography Masterclass",
-                Description = "Master digital photography and photo editing",
-                Category = TaskCategory.PhotoVideo,
-                Type = CourseType.Workshop,
-                Duration = "3 days",
+                Title = "Data Science with Python",
+                Description = "Analyse data, build models, and visualise insights using Python, pandas and scikit-learn.",
+                Category = TaskCategory.TechHelp,
+                Type = CourseType.WebSeminar,
+                Duration = "8 weeks",
                 Difficulty = DifficultyLevel.Intermediate,
-                InstructorName = "John Photographer",
-                ImageUrl = "/images/courses/photography.svg"
-            },
-            new Course
-            {
-                Title = "Creative Writing Workshop",
-                Description = "Improve your writing skills and storytelling",
-                Category = TaskCategory.WritingEditing,
-                Type = CourseType.Workshop,
-                Duration = "4 weeks",
-                Difficulty = DifficultyLevel.Beginner,
-                InstructorName = "Emma Writer",
-                ImageUrl = "/images/courses/writing.svg"
+                InstructorName = "Dr. Alan Wong",
+                ImageUrl = "https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=800"
             },
             new Course
             {
                 Title = "Graphic Design Fundamentals",
-                Description = "Learn design principles and Adobe Creative Suite",
+                Description = "Master design principles, colour theory and the Adobe Creative Suite.",
                 Category = TaskCategory.CreativeDesign,
                 Type = CourseType.OnlineCourse,
                 Duration = "8 weeks",
                 Difficulty = DifficultyLevel.Beginner,
                 InstructorName = "Mark Designer",
-                ImageUrl = "/images/courses/graphic-design.svg"
+                ImageUrl = "https://images.pexels.com/photos/196645/pexels-photo-196645.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "UI/UX Design Essentials",
+                Description = "Design intuitive interfaces and prototype real products in Figma.",
+                Category = TaskCategory.CreativeDesign,
+                Type = CourseType.Workshop,
+                Duration = "5 weeks",
+                Difficulty = DifficultyLevel.Intermediate,
+                InstructorName = "Lena Park",
+                ImageUrl = "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "Photography Masterclass",
+                Description = "Master composition, lighting and photo editing for stunning shots.",
+                Category = TaskCategory.PhotoVideo,
+                Type = CourseType.Workshop,
+                Duration = "3 days",
+                Difficulty = DifficultyLevel.Intermediate,
+                InstructorName = "John Photographer",
+                ImageUrl = "https://images.pexels.com/photos/1264210/pexels-photo-1264210.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "Video Editing & Production",
+                Description = "Edit cinematic videos and tell stories with Premiere Pro and DaVinci Resolve.",
+                Category = TaskCategory.PhotoVideo,
+                Type = CourseType.OnlineCourse,
+                Duration = "6 weeks",
+                Difficulty = DifficultyLevel.Intermediate,
+                InstructorName = "Carlos Vega",
+                ImageUrl = "https://images.pexels.com/photos/7234256/pexels-photo-7234256.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "Creative Writing Workshop",
+                Description = "Improve your storytelling, voice and editing across fiction and non-fiction.",
+                Category = TaskCategory.WritingEditing,
+                Type = CourseType.Workshop,
+                Duration = "4 weeks",
+                Difficulty = DifficultyLevel.Beginner,
+                InstructorName = "Emma Writer",
+                ImageUrl = "https://images.pexels.com/photos/590016/pexels-photo-590016.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "Copywriting for Marketing",
+                Description = "Write persuasive copy for ads, landing pages and social campaigns.",
+                Category = TaskCategory.WritingEditing,
+                Type = CourseType.OnlineCourse,
+                Duration = "5 weeks",
+                Difficulty = DifficultyLevel.Intermediate,
+                InstructorName = "Rachel Bloom",
+                ImageUrl = "https://images.pexels.com/photos/905163/pexels-photo-905163.jpeg?auto=compress&cs=tinysrgb&w=800"
             },
             new Course
             {
                 Title = "Spanish for Beginners",
-                Description = "Start your Spanish learning journey",
+                Description = "Start speaking Spanish with practical vocabulary and everyday conversation.",
                 Category = TaskCategory.LanguageHelp,
                 Type = CourseType.OnlineCourse,
                 Duration = "10 weeks",
                 Difficulty = DifficultyLevel.Beginner,
                 InstructorName = "Maria Garcia",
-                ImageUrl = "/images/courses/spanish.svg"
+                ImageUrl = "https://images.pexels.com/photos/256417/pexels-photo-256417.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "Business English & IELTS Prep",
+                Description = "Sharpen academic and professional English and prepare for the IELTS exam.",
+                Category = TaskCategory.LanguageHelp,
+                Type = CourseType.WebSeminar,
+                Duration = "7 weeks",
+                Difficulty = DifficultyLevel.Intermediate,
+                InstructorName = "James Carter",
+                ImageUrl = "https://images.pexels.com/photos/267669/pexels-photo-267669.jpeg?auto=compress&cs=tinysrgb&w=800"
             },
             new Course
             {
                 Title = "Advanced Mathematics Techniques",
-                Description = "Master calculus and linear algebra",
+                Description = "Master calculus and linear algebra with worked examples and problem sets.",
                 Category = TaskCategory.StudyHelp,
                 Type = CourseType.WebSeminar,
                 Duration = "5 weeks",
                 Difficulty = DifficultyLevel.Advanced,
                 InstructorName = "Prof. David Math",
-                ImageUrl = "/images/courses/math.svg"
+                ImageUrl = "https://images.pexels.com/photos/6256065/pexels-photo-6256065.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            new Course
+            {
+                Title = "Public Speaking & Presentation",
+                Description = "Build confidence and deliver clear, compelling presentations to any audience.",
+                Category = TaskCategory.StudyHelp,
+                Type = CourseType.Workshop,
+                Duration = "3 weeks",
+                Difficulty = DifficultyLevel.Beginner,
+                InstructorName = "Nina Roberts",
+                ImageUrl = "https://images.pexels.com/photos/2173508/pexels-photo-2173508.jpeg?auto=compress&cs=tinysrgb&w=800"
             }
         };
 
         foreach (var courseSeed in coursesToSeed)
         {
-            if (!context.Courses.Any(c => c.Title == courseSeed.Title))
+            var existing = context.Courses.FirstOrDefault(c => c.Title == courseSeed.Title);
+            if (existing == null)
             {
                 context.Courses.Add(courseSeed);
+            }
+            else
+            {
+                // Refresh content/imagery for previously-seeded courses.
+                existing.Description = courseSeed.Description;
+                existing.ImageUrl = courseSeed.ImageUrl;
+                existing.Category = courseSeed.Category;
+                existing.Type = courseSeed.Type;
+                existing.Duration = courseSeed.Duration;
+                existing.Difficulty = courseSeed.Difficulty;
+                existing.InstructorName = courseSeed.InstructorName;
             }
         }
 
